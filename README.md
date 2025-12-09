@@ -1,40 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# MaintainX Convert
+
+Small Next.js tool that converts an uploaded Excel/CSV file into a pre-formatted **Job Journal** workbook. Conversion runs entirely in the browser (ExcelJS + FileSaver), so your data never leaves your machine.
+
+## Features
+- Upload `.xlsx`, `.xls`, or `.csv` files and parse them client-side.
+- Generates a new workbook with a single `Job Journal` sheet and standardized headers.
+- Maps key fields from the first worksheet: Posting Date (column 14), Resource/Item number (column 4), Quantity (column 10); sets `Type` to `Item` and `Bin Code` to `NEW`.
+- Skips the first row of the source data (treated as the header) and processes the rest.
+- Built with Next.js 16, Mantine UI, and TypeScript.
+
+## Requirements
+- Node.js 18+ (matches Next.js 16 support matrix)
+- Yarn, npm, pnpm, or bun for package management
 
 ## Getting Started
-
-First, run the development server:
-
+Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+yarn install
+# or npm install / pnpm install / bun install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run the dev server:
+```bash
+yarn dev
+```
+Then open `http://localhost:3000`.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+Other scripts:
+- `yarn build` – production build
+- `yarn start` – start the production server
+- `yarn lint` – run ESLint
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+## Usage
+1. Open the app and choose a spreadsheet (`.xlsx`, `.xls`, or `.csv`).
+2. Click **Process file**. The app reads the first worksheet (or builds one from the CSV), ignores the header row, and writes rows into a new `Job Journal` sheet.
+3. A file named `job-journal.xlsx` downloads automatically.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## Conversion details
+- Headers written to the output sheet (in order): `Line Type`, `Posting Date`, `Document No.`, `Job No.`, `Job Task No.`, `Type No.`, `Resourcetype`, `Description`, `Location Code`, `Bin Code`, `Work Type Code`, `EV Piece Work Code`, `Unit of Measure Code`, `Quantity`, `Unit Cost`, `Unit Cost (LCY)`, `Total Cost`, `Total Cost (LCY)`, `Unit Price`, `Line Amount`, `Line Discount Amount`, `Line Discount %`, `Applies-to Entry`.
+- For each data row (after the header):
+  - `Posting Date` is taken from source column 14.
+  - `Type` is set to `Item`.
+  - `Resourcetype` is taken from source column 4.
+  - `Bin Code` is set to `NEW`.
+  - `Quantity` is taken from source column 10.
+  - All other columns are left blank; extend `parseWorkbook` in `pages/index.tsx` to map more fields as needed.
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tech stack
+- Next.js 16 (Pages Router)
+- Mantine Core 8
+- ExcelJS for workbook parsing/writing
+- FileSaver for client downloads
+- TypeScript & ESLint
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+## Notes
+- No backend: files are parsed in-memory in the browser.
+- If you add new fields or change column mappings, update the `parseWorkbook` function in `pages/index.tsx` so the output aligns with your ERP import format.
