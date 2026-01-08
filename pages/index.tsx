@@ -30,9 +30,7 @@ export default function Home() {
       const outbook = new ExcelJS.Workbook();
       const outsheet = outbook.addWorksheet("Job Journal");
       outsheet.addRow([
-        "Line Type",
         "Posting Date",
-        "Document No.",
         "Job No.",
         "Job Task No.",
         "Type",
@@ -73,10 +71,7 @@ export default function Home() {
       insheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
         if (rowNumber === 1) return;
         outsheet.addRow([
-          '',
           row.getCell(14).value ?? '',
-          '',
-          '',
           '',
           '',
           "Item",
@@ -85,8 +80,8 @@ export default function Home() {
           '',
           'NEW',
           '',
-          '',
-          row.getCell(10).value ?? '',
+          'PCS ',
+          (row.getCell(10).value ?? '') as number * -1,
         ]);
       });
       const buffer = await outbook.xlsx.writeBuffer();
