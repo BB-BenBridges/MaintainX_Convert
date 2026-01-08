@@ -78,7 +78,7 @@ export default function Home() {
 
       for (const row of rows) {
         outsheet.addRow([
-          (row.getCell(14).value as string ?? "").split(" ")[0],
+          new Date(row.getCell(14).value as string).toLocaleDateString(),
           await getJobNo(row, jobNoCache),
           "",
           "Item",
