@@ -11,6 +11,7 @@ import {
   Title,
 } from "@mantine/core";
 import { saveAs } from "file-saver";
+import { Row } from "exceljs";
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
@@ -68,22 +69,28 @@ export default function Home() {
       }
 
       const insheet = inbook.worksheets[0];
+      const jobNoCache = new Map<string, string>();
+      const rows: Row[] = [];
       insheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
         if (rowNumber === 1) return;
-        outsheet.addRow([
-          row.getCell(14).value ?? '',
-          '',
-          '',
-          "Item",
-          (row?.getCell(4)?.value as string ?? '').split(" - ")[0],
-          '',
-          '',
-          'NEW',
-          '',
-          'PCS ',
-          (row.getCell(10).value ?? '') as number * -1,
-        ]);
+        rows.push(row);
       });
+
+      for (const row of rows) {
+        outsheet.addRow([
+          (row.getCell(14).value as string ?? "").split(" ")[0],
+          await getJobNo(row, jobNoCache),
+          "",
+          "Item",
+          (row?.getCell(4)?.value as string ?? "").split(" - ")[0],
+          "",
+          "",
+          "NEW",
+          "",
+          "PCS ",
+          (row.getCell(10).value ?? "") as number * -1,
+        ]);
+      }
       const buffer = await outbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -149,4 +156,32 @@ export default function Home() {
       </Stack>
     </Container>
   );
+}
+
+async function getJobNo(row: Row, cache: Map<string, string>) {
+  const rawId = row.getCell(17).value;
+  const id = rawId === null || rawId === undefined ? "" : String(rawId).trim();
+  if (id) {
+    const cached = cache.get(id);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const workOrder = await fetch("/api/getWorkOrder?id=" + id).then((res) =>
+      res.json()
+    );
+
+    if (workOrder.asset) {
+      const jobNo = workOrder.asset.name.split(" - ")[0];
+      cache.set(id, jobNo);
+      return jobNo;
+    } else if (workOrder.location && workOrder.location.name.includes(" - ")) {
+      const jobNo = workOrder.location.name.split(" - ")[0];
+      cache.set(id, jobNo);
+      return jobNo;
+    }
+    const jobNo = "";
+    cache.set(id, jobNo);
+    return jobNo;
+  }
+  return "";
 }
